@@ -439,33 +439,89 @@ var ConstantClassInfo = Parser.start().uint16be("name_index");
         0xa9: Parser.start().namely("ret") // ret
       }
     })
-    .namely("wide");
+    .namely("wide")
+    .buffer("length", {
+      length: () => 0,
+      formatter: function () {
+        return 1 + 1 + 1 + 2 + (this.modifiedOpcode == 0x84 ? 2 : 0);
+      }
+    });
 
   const TableswitchParser = Parser.start()
     .namely("tableswitch")
-    .uint8("padding1")
-    .uint8("padding2")
-    .uint8("padding3")
-    .int32be("default")
+    .buffer("offset", {
+      length: () => 0,
+      formatter: function () {
+        return this.$parent.$parent.$parent.instructions
+          .map((_) => _.instruction.info.length)
+          .reduce((a, b) => a + b);
+      }
+    })
+    .buffer("padding", {
+      length: function () {
+        var the_length = (4 - ((this.offset + 1) % 4)) % 4;
+        return the_length;
+      }
+    })
+    .int32be("default", {
+      formatter: function (v) {
+        return v + this.offset;
+      }
+    })
     .int32be("low")
     .int32be("high")
     .array("jumpOffsets", {
       type: "int32be",
       length: function () {
         return this.high - this.low + 1;
+      },
+      formatter: function (att) {
+        return att.map((v) => v + this.offset);
+      }
+    })
+    .buffer("length", {
+      length: () => 0,
+      formatter: function () {
+        return (
+          1 +
+          ((4 - ((this.offset + 1) % 4)) % 4) +
+          4 +
+          4 +
+          4 +
+          4 * (this.high - this.low + 1)
+        );
       }
     });
 
   const LookupswitchParser = Parser.start()
     .namely("lookupswitch")
-    .uint8("padding1")
-    .uint8("padding2")
-    .uint8("padding3")
+    .buffer("offset", {
+      length: () => 0,
+      formatter: function () {
+        return this.$parent.$parent.$parent.instructions
+          .map((_) => _.instruction.info.length)
+          .reduce((a, b) => a + b);
+      }
+    })
+    .buffer("padding", {
+      length: function () {
+        var the_length = (4 - ((this.offset + 1) % 4)) % 4;
+        return the_length;
+      }
+    })
     .int32be("default")
     .int32be("npairs")
     .array("matchOffsetPairs", {
       type: Parser.start().int32be("match").int32be("offset"),
       length: "npairs"
+    })
+    .buffer("length", {
+      length: () => 0,
+      formatter: function () {
+        return (
+          1 + ((4 - ((this.offset + 1) % 4)) % 4) + 4 + 4 + 8 * this.npairs
+        );
+      }
     });
 
   var InstructionParser = Parser.start()
@@ -473,219 +529,664 @@ var ConstantClassInfo = Parser.start().uint16be("name_index");
     .choice("info", {
       tag: "opcode",
       choices: {
-        0x00: Parser.start().namely("nop"), // nop
-        0x01: Parser.start().namely("aconst_null"), // aconst_null
-        0x02: Parser.start().namely("iconst_m1"), // iconst_m1
-        0x03: Parser.start().namely("iconst_0"), // iconst_0
-        0x04: Parser.start().namely("iconst_1"), // iconst_1
-        0x05: Parser.start().namely("iconst_2"), // iconst_2
-        0x06: Parser.start().namely("iconst_3"), // iconst_3
-        0x07: Parser.start().namely("iconst_4"), // iconst_4
-        0x08: Parser.start().namely("iconst_5"), // iconst_5
-        0x09: Parser.start().namely("lconst_0"), // lconst_0
-        0x0a: Parser.start().namely("lconst_1"), // lconst_1
-        0x0b: Parser.start().namely("fconst_0"), // fconst_0
-        0x0c: Parser.start().namely("fconst_1"), // fconst_1
-        0x0d: Parser.start().namely("fconst_2"), // fconst_2
-        0x0e: Parser.start().namely("dconst_0"), // dconst_0
-        0x0f: Parser.start().namely("dconst_1"), // dconst_1
-        0x10: Parser.start().int8("byte").namely("bipush"), // bipush
-        0x11: Parser.start().int16be("value").namely("sipush"), // sipush
-        0x12: Parser.start().uint8("index").namely("ldc"), // ldc
-        0x13: Parser.start().uint16be("index").namely("ldc_w"), // ldc_w
-        0x14: Parser.start().uint16be("index").namely("ldc2_w"), // ldc2_w
-        0x15: Parser.start().uint8("index").namely("iload"), // iload
-        0x16: Parser.start().uint8("index").namely("lload"), // lload
-        0x17: Parser.start().uint8("index").namely("fload"), // fload
-        0x18: Parser.start().uint8("index").namely("dload"), // dload
-        0x19: Parser.start().uint8("index").namely("aload"), // aload
-        0x1a: Parser.start().namely("iload_0"), // iload_0
-        0x1b: Parser.start().namely("iload_1"), // iload_1
-        0x1c: Parser.start().namely("iload_2"), // iload_2
-        0x1d: Parser.start().namely("iload_3"), // iload_3
-        0x1e: Parser.start().namely("lload_0"), // lload_0
-        0x1f: Parser.start().namely("lload_1"), // lload_1
-        0x20: Parser.start().namely("lload_2"), // lload_2
-        0x21: Parser.start().namely("lload_3"), // lload_3
-        0x22: Parser.start().namely("fload_0"), // fload_0
-        0x23: Parser.start().namely("fload_1"), // fload_1
-        0x24: Parser.start().namely("fload_2"), // fload_2
-        0x25: Parser.start().namely("fload_3"), // fload_3
-        0x26: Parser.start().namely("dload_0"), // dload_0
-        0x27: Parser.start().namely("dload_1"), // dload_1
-        0x28: Parser.start().namely("dload_2"), // dload_2
-        0x29: Parser.start().namely("dload_3"), // dload_3
-        0x2a: Parser.start().namely("aload_0"), // aload_0
-        0x2b: Parser.start().namely("aload_1"), // aload_1
-        0x2c: Parser.start().namely("aload_2"), // aload_2
-        0x2d: Parser.start().namely("aload_3"), // aload_3
-        0x2e: Parser.start().namely("iaload"), // iaload
-        0x2f: Parser.start().namely("laload"), // laload
-        0x30: Parser.start().namely("faload"), // faload
-        0x31: Parser.start().namely("daload"), // daload
-        0x32: Parser.start().namely("aaload"), // aaload
-        0x33: Parser.start().namely("baload"), // baload
-        0x34: Parser.start().namely("caload"), // caload
-        0x35: Parser.start().namely("saload"), // saload
-        0x36: Parser.start().uint8("index").namely("istore"), // istore
-        0x37: Parser.start().uint8("index").namely("lstore"), // lstore
-        0x38: Parser.start().uint8("index").namely("fstore"), // fstore
-        0x39: Parser.start().uint8("index").namely("dstore"), // dstore
-        0x3a: Parser.start().uint8("index").namely("astore"), // astore
-        0x3b: Parser.start().namely("istore_0"), // istore_0
-        0x3c: Parser.start().namely("istore_1"), // istore_1
-        0x3d: Parser.start().namely("istore_2"), // istore_2
-        0x3e: Parser.start().namely("istore_3"), // istore_3
-        0x3f: Parser.start().namely("lstore_0"), // lstore_0
-        0x40: Parser.start().namely("lstore_1"), // lstore_1
-        0x41: Parser.start().namely("lstore_2"), // lstore_2
-        0x42: Parser.start().namely("lstore_3"), // lstore_3
-        0x43: Parser.start().namely("fstore_0"), // fstore_0
-        0x44: Parser.start().namely("fstore_1"), // fstore_1
-        0x45: Parser.start().namely("fstore_2"), // fstore_2
-        0x46: Parser.start().namely("fstore_3"), // fstore_3
-        0x47: Parser.start().namely("dstore_0"), // dstore_0
-        0x48: Parser.start().namely("dstore_1"), // dstore_1
-        0x49: Parser.start().namely("dstore_2"), // dstore_2
-        0x4a: Parser.start().namely("dstore_3"), // dstore_3
-        0x4b: Parser.start().namely("astore_0"), // astore_0
-        0x4c: Parser.start().namely("astore_1"), // astore_1
-        0x4d: Parser.start().namely("astore_2"), // astore_2
-        0x4e: Parser.start().namely("astore_3"), // astore_3
-        0x4f: Parser.start().namely("iastore"), // iastore
-        0x50: Parser.start().namely("lastore"), // lastore
-        0x51: Parser.start().namely("fastore"), // fastore
-        0x52: Parser.start().namely("dastore"), // dastore
-        0x53: Parser.start().namely("aastore"), // aastore
-        0x54: Parser.start().namely("bastore"), // bastore
-        0x55: Parser.start().namely("castore"), // castore
-        0x56: Parser.start().namely("sastore"), // sastore
-        0x57: Parser.start().namely("pop"), // pop
-        0x58: Parser.start().namely("pop2"), // pop2
-        0x59: Parser.start().namely("dup"), // dup
-        0x5a: Parser.start().namely("dup_x1"), // dup_x1
-        0x5b: Parser.start().namely("dup_x2"), // dup_x2
-        0x5c: Parser.start().namely("dup2"), // dup2
-        0x5d: Parser.start().namely("dup2_x1"), // dup2_x1
-        0x5e: Parser.start().namely("dup2_x2"), // dup2_x2
-        0x5f: Parser.start().namely("swap"), // swap
-        0x60: Parser.start().namely("iadd"), // iadd
-        0x61: Parser.start().namely("ladd"), // ladd
-        0x62: Parser.start().namely("fadd"), // fadd
-        0x63: Parser.start().namely("dadd"), // dadd
-        0x64: Parser.start().namely("isub"), // isub
-        0x65: Parser.start().namely("lsub"), // lsub
-        0x66: Parser.start().namely("fsub"), // fsub
-        0x67: Parser.start().namely("dsub"), // dsub
-        0x68: Parser.start().namely("imul"), // imul
-        0x69: Parser.start().namely("lmul"), // lmul
-        0x6a: Parser.start().namely("fmul"), // fmul
-        0x6b: Parser.start().namely("dmul"), // dmul
-        0x6c: Parser.start().namely("idiv"), // idiv
-        0x6d: Parser.start().namely("ldiv"), // ldiv
-        0x6e: Parser.start().namely("fdiv"), // fdiv
-        0x6f: Parser.start().namely("ddiv"), // ddiv
-        0x70: Parser.start().namely("irem"), // irem
-        0x71: Parser.start().namely("lrem"), // lrem
-        0x72: Parser.start().namely("frem"), // frem
-        0x73: Parser.start().namely("drem"), // drem
-        0x74: Parser.start().namely("ineg"), // ineg
-        0x75: Parser.start().namely("lneg"), // lneg
-        0x76: Parser.start().namely("fneg"), // fneg
-        0x77: Parser.start().namely("dneg"), // dneg
-        0x78: Parser.start().namely("ishl"), // ishl
-        0x79: Parser.start().namely("lshl"), // lshl
-        0x7a: Parser.start().namely("ishr"), // ishr
-        0x7b: Parser.start().namely("lshr"), // lshr
-        0x7c: Parser.start().namely("iushr"), // iushr
-        0x7d: Parser.start().namely("lushr"), // lushr
-        0x7e: Parser.start().namely("iand"), // iand
-        0x7f: Parser.start().namely("land"), // land
-        0x80: Parser.start().namely("ior"), // ior
-        0x81: Parser.start().namely("lor"), // lor
-        0x82: Parser.start().namely("ixor"), // ixor
-        0x83: Parser.start().namely("lxor"), // lxor
-        0x84: Parser.start().uint8("index").int8("const").namely("iinc"), // iinc
-        0x85: Parser.start().namely("i2l"), // i2l
-        0x86: Parser.start().namely("i2f"), // i2f
-        0x87: Parser.start().namely("i2d"), // i2d
-        0x88: Parser.start().namely("l2i"), // l2i
-        0x89: Parser.start().namely("l2f"), // l2f
-        0x8a: Parser.start().namely("l2d"), // l2d
-        0x8b: Parser.start().namely("f2i"), // f2i
-        0x8c: Parser.start().namely("f2l"), // f2l
-        0x8d: Parser.start().namely("f2d"), // f2d
-        0x8e: Parser.start().namely("d2i"), // d2i
-        0x8f: Parser.start().namely("d2l"), // d2l
-        0x90: Parser.start().namely("d2f"), // d2f
-        0x91: Parser.start().namely("i2b"), // i2b
-        0x92: Parser.start().namely("i2c"), // i2c
-        0x93: Parser.start().namely("i2s"), // i2s
-        0x94: Parser.start().namely("lcmp"), // lcmp
-        0x95: Parser.start().namely("fcmpl"), // fcmpl
-        0x96: Parser.start().namely("fcmpg"), // fcmpg
-        0x97: Parser.start().namely("dcmpl"), // dcmpl
-        0x98: Parser.start().namely("dcmpg"), // dcmpg
-        0x99: Parser.start().int16be("branchoffset").namely("ifeq"), // ifeq
-        0x9a: Parser.start().int16be("branchoffset").namely("ifne"), // ifne
-        0x9b: Parser.start().int16be("branchoffset").namely("iflt"), // iflt
-        0x9c: Parser.start().int16be("branchoffset").namely("ifge"), // ifge
-        0x9d: Parser.start().int16be("branchoffset").namely("ifgt"), // ifgt
-        0x9e: Parser.start().int16be("branchoffset").namely("ifle"), // ifle
-        0x9f: Parser.start().int16be("branchoffset").namely("if_icmpeq"), // if_icmpeq
-        0xa0: Parser.start().int16be("branchoffset").namely("if_icmpne"), // if_icmpne
-        0xa1: Parser.start().int16be("branchoffset").namely("if_icmplt"), // if_icmplt
-        0xa2: Parser.start().int16be("branchoffset").namely("if_icmpge"), // if_icmpge
-        0xa3: Parser.start().int16be("branchoffset").namely("if_icmpgt"), // if_icmpgt
-        0xa4: Parser.start().int16be("branchoffset").namely("if_icmple"), // if_icmple
-        0xa5: Parser.start().int16be("branchoffset").namely("if_acmpeq"), // if_acmpeq
-        0xa6: Parser.start().int16be("branchoffset").namely("if_acmpne"), // if_acmpne
-        0xa7: Parser.start().int16be("branchoffset").namely("goto"), // goto
-        0xa8: Parser.start().int16be("branchoffset").namely("jsr"), // jsr
-        0xa9: Parser.start().uint8("index").namely("ret"), // ret
+        0x00: Parser.start()
+          .namely("nop")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // nop
+        0x01: Parser.start()
+          .namely("aconst_null")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aconst_null
+        0x02: Parser.start()
+          .namely("iconst_m1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_m1
+        0x03: Parser.start()
+          .namely("iconst_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_0
+        0x04: Parser.start()
+          .namely("iconst_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_1
+        0x05: Parser.start()
+          .namely("iconst_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_2
+        0x06: Parser.start()
+          .namely("iconst_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_3
+        0x07: Parser.start()
+          .namely("iconst_4")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_4
+        0x08: Parser.start()
+          .namely("iconst_5")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iconst_5
+        0x09: Parser.start()
+          .namely("lconst_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lconst_0
+        0x0a: Parser.start()
+          .namely("lconst_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lconst_1
+        0x0b: Parser.start()
+          .namely("fconst_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fconst_0
+        0x0c: Parser.start()
+          .namely("fconst_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fconst_1
+        0x0d: Parser.start()
+          .namely("fconst_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fconst_2
+        0x0e: Parser.start()
+          .namely("dconst_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dconst_0
+        0x0f: Parser.start()
+          .namely("dconst_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dconst_1
+        0x10: Parser.start()
+          .int8("byte")
+          .namely("bipush")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // bipush
+        0x11: Parser.start()
+          .int16be("value")
+          .namely("sipush")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // sipush
+        0x12: Parser.start()
+          .uint8("index")
+          .namely("ldc")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // ldc
+        0x13: Parser.start()
+          .uint16be("index")
+          .namely("ldc_w")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ldc_w
+        0x14: Parser.start()
+          .uint16be("index")
+          .namely("ldc2_w")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ldc2_w
+        0x15: Parser.start()
+          .uint8("index")
+          .namely("iload")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // iload
+        0x16: Parser.start()
+          .uint8("index")
+          .namely("lload")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // lload
+        0x17: Parser.start()
+          .uint8("index")
+          .namely("fload")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // fload
+        0x18: Parser.start()
+          .uint8("index")
+          .namely("dload")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // dload
+        0x19: Parser.start()
+          .uint8("index")
+          .namely("aload")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // aload
+        0x1a: Parser.start()
+          .namely("iload_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iload_0
+        0x1b: Parser.start()
+          .namely("iload_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iload_1
+        0x1c: Parser.start()
+          .namely("iload_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iload_2
+        0x1d: Parser.start()
+          .namely("iload_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iload_3
+        0x1e: Parser.start()
+          .namely("lload_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lload_0
+        0x1f: Parser.start()
+          .namely("lload_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lload_1
+        0x20: Parser.start()
+          .namely("lload_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lload_2
+        0x21: Parser.start()
+          .namely("lload_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lload_3
+        0x22: Parser.start()
+          .namely("fload_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fload_0
+        0x23: Parser.start()
+          .namely("fload_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fload_1
+        0x24: Parser.start()
+          .namely("fload_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fload_2
+        0x25: Parser.start()
+          .namely("fload_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fload_3
+        0x26: Parser.start()
+          .namely("dload_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dload_0
+        0x27: Parser.start()
+          .namely("dload_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dload_1
+        0x28: Parser.start()
+          .namely("dload_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dload_2
+        0x29: Parser.start()
+          .namely("dload_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dload_3
+        0x2a: Parser.start()
+          .namely("aload_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aload_0
+        0x2b: Parser.start()
+          .namely("aload_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aload_1
+        0x2c: Parser.start()
+          .namely("aload_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aload_2
+        0x2d: Parser.start()
+          .namely("aload_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aload_3
+        0x2e: Parser.start()
+          .namely("iaload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iaload
+        0x2f: Parser.start()
+          .namely("laload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // laload
+        0x30: Parser.start()
+          .namely("faload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // faload
+        0x31: Parser.start()
+          .namely("daload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // daload
+        0x32: Parser.start()
+          .namely("aaload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aaload
+        0x33: Parser.start()
+          .namely("baload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // baload
+        0x34: Parser.start()
+          .namely("caload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // caload
+        0x35: Parser.start()
+          .namely("saload")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // saload
+        0x36: Parser.start()
+          .uint8("index")
+          .namely("istore")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // istore
+        0x37: Parser.start()
+          .uint8("index")
+          .namely("lstore")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // lstore
+        0x38: Parser.start()
+          .uint8("index")
+          .namely("fstore")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // fstore
+        0x39: Parser.start()
+          .uint8("index")
+          .namely("dstore")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // dstore
+        0x3a: Parser.start()
+          .uint8("index")
+          .namely("astore")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // astore
+        0x3b: Parser.start()
+          .namely("istore_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // istore_0
+        0x3c: Parser.start()
+          .namely("istore_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // istore_1
+        0x3d: Parser.start()
+          .namely("istore_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // istore_2
+        0x3e: Parser.start()
+          .namely("istore_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // istore_3
+        0x3f: Parser.start()
+          .namely("lstore_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lstore_0
+        0x40: Parser.start()
+          .namely("lstore_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lstore_1
+        0x41: Parser.start()
+          .namely("lstore_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lstore_2
+        0x42: Parser.start()
+          .namely("lstore_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lstore_3
+        0x43: Parser.start()
+          .namely("fstore_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fstore_0
+        0x44: Parser.start()
+          .namely("fstore_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fstore_1
+        0x45: Parser.start()
+          .namely("fstore_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fstore_2
+        0x46: Parser.start()
+          .namely("fstore_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fstore_3
+        0x47: Parser.start()
+          .namely("dstore_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dstore_0
+        0x48: Parser.start()
+          .namely("dstore_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dstore_1
+        0x49: Parser.start()
+          .namely("dstore_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dstore_2
+        0x4a: Parser.start()
+          .namely("dstore_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dstore_3
+        0x4b: Parser.start()
+          .namely("astore_0")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // astore_0
+        0x4c: Parser.start()
+          .namely("astore_1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // astore_1
+        0x4d: Parser.start()
+          .namely("astore_2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // astore_2
+        0x4e: Parser.start()
+          .namely("astore_3")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // astore_3
+        0x4f: Parser.start()
+          .namely("iastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iastore
+        0x50: Parser.start()
+          .namely("lastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lastore
+        0x51: Parser.start()
+          .namely("fastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fastore
+        0x52: Parser.start()
+          .namely("dastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dastore
+        0x53: Parser.start()
+          .namely("aastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // aastore
+        0x54: Parser.start()
+          .namely("bastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // bastore
+        0x55: Parser.start()
+          .namely("castore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // castore
+        0x56: Parser.start()
+          .namely("sastore")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // sastore
+        0x57: Parser.start()
+          .namely("pop")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // pop
+        0x58: Parser.start()
+          .namely("pop2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // pop2
+        0x59: Parser.start()
+          .namely("dup")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup
+        0x5a: Parser.start()
+          .namely("dup_x1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup_x1
+        0x5b: Parser.start()
+          .namely("dup_x2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup_x2
+        0x5c: Parser.start()
+          .namely("dup2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup2
+        0x5d: Parser.start()
+          .namely("dup2_x1")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup2_x1
+        0x5e: Parser.start()
+          .namely("dup2_x2")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dup2_x2
+        0x5f: Parser.start()
+          .namely("swap")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // swap
+        0x60: Parser.start()
+          .namely("iadd")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iadd
+        0x61: Parser.start()
+          .namely("ladd")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ladd
+        0x62: Parser.start()
+          .namely("fadd")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fadd
+        0x63: Parser.start()
+          .namely("dadd")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dadd
+        0x64: Parser.start()
+          .namely("isub")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // isub
+        0x65: Parser.start()
+          .namely("lsub")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lsub
+        0x66: Parser.start()
+          .namely("fsub")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fsub
+        0x67: Parser.start()
+          .namely("dsub")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dsub
+        0x68: Parser.start()
+          .namely("imul")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // imul
+        0x69: Parser.start()
+          .namely("lmul")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lmul
+        0x6a: Parser.start()
+          .namely("fmul")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fmul
+        0x6b: Parser.start()
+          .namely("dmul")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dmul
+        0x6c: Parser.start()
+          .namely("idiv")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // idiv
+        0x6d: Parser.start()
+          .namely("ldiv")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ldiv
+        0x6e: Parser.start()
+          .namely("fdiv")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fdiv
+        0x6f: Parser.start()
+          .namely("ddiv")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ddiv
+        0x70: Parser.start()
+          .namely("irem")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // irem
+        0x71: Parser.start()
+          .namely("lrem")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lrem
+        0x72: Parser.start()
+          .namely("frem")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // frem
+        0x73: Parser.start()
+          .namely("drem")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // drem
+        0x74: Parser.start()
+          .namely("ineg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ineg
+        0x75: Parser.start()
+          .namely("lneg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lneg
+        0x76: Parser.start()
+          .namely("fneg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fneg
+        0x77: Parser.start()
+          .namely("dneg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dneg
+        0x78: Parser.start()
+          .namely("ishl")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ishl
+        0x79: Parser.start()
+          .namely("lshl")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lshl
+        0x7a: Parser.start()
+          .namely("ishr")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ishr
+        0x7b: Parser.start()
+          .namely("lshr")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lshr
+        0x7c: Parser.start()
+          .namely("iushr")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iushr
+        0x7d: Parser.start()
+          .namely("lushr")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lushr
+        0x7e: Parser.start()
+          .namely("iand")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // iand
+        0x7f: Parser.start()
+          .namely("land")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // land
+        0x80: Parser.start()
+          .namely("ior")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ior
+        0x81: Parser.start()
+          .namely("lor")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lor
+        0x82: Parser.start()
+          .namely("ixor")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ixor
+        0x83: Parser.start()
+          .namely("lxor")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lxor
+        0x84: Parser.start()
+          .uint8("index")
+          .int8("const")
+          .namely("iinc")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // iinc
+        0x85: Parser.start()
+          .namely("i2l")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2l
+        0x86: Parser.start()
+          .namely("i2f")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2f
+        0x87: Parser.start()
+          .namely("i2d")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2d
+        0x88: Parser.start()
+          .namely("l2i")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // l2i
+        0x89: Parser.start()
+          .namely("l2f")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // l2f
+        0x8a: Parser.start()
+          .namely("l2d")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // l2d
+        0x8b: Parser.start()
+          .namely("f2i")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // f2i
+        0x8c: Parser.start()
+          .namely("f2l")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // f2l
+        0x8d: Parser.start()
+          .namely("f2d")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // f2d
+        0x8e: Parser.start()
+          .namely("d2i")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // d2i
+        0x8f: Parser.start()
+          .namely("d2l")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // d2l
+        0x90: Parser.start()
+          .namely("d2f")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // d2f
+        0x91: Parser.start()
+          .namely("i2b")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2b
+        0x92: Parser.start()
+          .namely("i2c")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2c
+        0x93: Parser.start()
+          .namely("i2s")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // i2s
+        0x94: Parser.start()
+          .namely("lcmp")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lcmp
+        0x95: Parser.start()
+          .namely("fcmpl")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fcmpl
+        0x96: Parser.start()
+          .namely("fcmpg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // fcmpg
+        0x97: Parser.start()
+          .namely("dcmpl")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dcmpl
+        0x98: Parser.start()
+          .namely("dcmpg")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dcmpg
+        0x99: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifeq")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifeq
+        0x9a: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifne")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifne
+        0x9b: Parser.start()
+          .int16be("branchoffset")
+          .namely("iflt")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // iflt
+        0x9c: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifge")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifge
+        0x9d: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifgt")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifgt
+        0x9e: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifle")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifle
+        0x9f: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmpeq")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmpeq
+        0xa0: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmpne")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmpne
+        0xa1: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmplt")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmplt
+        0xa2: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmpge")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmpge
+        0xa3: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmpgt")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmpgt
+        0xa4: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_icmple")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_icmple
+        0xa5: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_acmpeq")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_acmpeq
+        0xa6: Parser.start()
+          .int16be("branchoffset")
+          .namely("if_acmpne")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // if_acmpne
+        0xa7: Parser.start()
+          .int16be("branchoffset")
+          .namely("goto")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // goto
+        0xa8: Parser.start()
+          .int16be("branchoffset")
+          .namely("jsr")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // jsr
+        0xa9: Parser.start()
+          .uint8("index")
+          .namely("ret")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // ret
         0xaa: "tableswitch", // tableswitch
         0xab: "lookupswitch", // lookupswitch
-        0xac: Parser.start().namely("ireturn"), // ireturn
-        0xad: Parser.start().namely("lreturn"), // lreturn
-        0xae: Parser.start().namely("freturn"), // freturn
-        0xaf: Parser.start().namely("dreturn"), // dreturn
-        0xb0: Parser.start().namely("areturn"), // areturn
-        0xb1: Parser.start().namely("return"), // return
-        0xb2: Parser.start().uint16be("index").namely("getstatic"), // getstatic
-        0xb3: Parser.start().uint16be("index").namely("putstatic"), // putstatic
-        0xb4: Parser.start().uint16be("index").namely("getfield"), // getfield
-        0xb5: Parser.start().uint16be("index").namely("putfield"), // putfield
-        0xb6: Parser.start().uint16be("index").namely("invokevirtual"), // invokevirtual
-        0xb7: Parser.start().uint16be("index").namely("invokespecial"), // invokespecial
-        0xb8: Parser.start().uint16be("index").namely("invokestatic"), // invokestatic
+        0xac: Parser.start()
+          .namely("ireturn")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // ireturn
+        0xad: Parser.start()
+          .namely("lreturn")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // lreturn
+        0xae: Parser.start()
+          .namely("freturn")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // freturn
+        0xaf: Parser.start()
+          .namely("dreturn")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // dreturn
+        0xb0: Parser.start()
+          .namely("areturn")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // areturn
+        0xb1: Parser.start()
+          .namely("return")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // return
+        0xb2: Parser.start()
+          .uint16be("index")
+          .namely("getstatic")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // getstatic
+        0xb3: Parser.start()
+          .uint16be("index")
+          .namely("putstatic")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // putstatic
+        0xb4: Parser.start()
+          .uint16be("index")
+          .namely("getfield")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // getfield
+        0xb5: Parser.start()
+          .uint16be("index")
+          .namely("putfield")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // putfield
+        0xb6: Parser.start()
+          .uint16be("index")
+          .namely("invokevirtual")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // invokevirtual
+        0xb7: Parser.start()
+          .uint16be("index")
+          .namely("invokespecial")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // invokespecial
+        0xb8: Parser.start()
+          .uint16be("index")
+          .namely("invokestatic")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // invokestatic
         0xb9: Parser.start()
           .uint16be("index")
           .uint8("count")
           .uint8("zero")
-          .namely("invokeinterface"), // invokeinterface
+          .namely("invokeinterface")
+          .buffer("length", { length: () => 0, formatter: () => 5 }), // invokeinterface
         0xba: Parser.start()
           .uint16be("index")
           .uint8("zero1")
           .uint8("zero2")
-          .namely("invokedynamic"), // invokedynamic
-        0xbb: Parser.start().uint16be("index").namely("new"), // new
-        0xbc: Parser.start().uint8("atype").namely("newarray"), // newarray
-        0xbd: Parser.start().uint16be("index").namely("anewarray"), // anewarray
-        0xbe: Parser.start().namely("arraylength"), // arraylength
-        0xbf: Parser.start().namely("athrow"), // athrow
-        0xc0: Parser.start().uint16be("index").namely("checkcast"), // checkcast
-        0xc1: Parser.start().uint16be("index").namely("instanceof"), // instanceof
-        0xc2: Parser.start().namely("monitorenter"), // monitorenter
-        0xc3: Parser.start().namely("monitorexit"), // monitorexit
+          .namely("invokedynamic")
+          .buffer("length", { length: () => 0, formatter: () => 5 }), // invokedynamic
+        0xbb: Parser.start()
+          .uint16be("index")
+          .namely("new")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // new
+        0xbc: Parser.start()
+          .uint8("atype")
+          .namely("newarray")
+          .buffer("length", { length: () => 0, formatter: () => 2 }), // newarray
+        0xbd: Parser.start()
+          .uint16be("index")
+          .namely("anewarray")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // anewarray
+        0xbe: Parser.start()
+          .namely("arraylength")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // arraylength
+        0xbf: Parser.start()
+          .namely("athrow")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // athrow
+        0xc0: Parser.start()
+          .uint16be("index")
+          .namely("checkcast")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // checkcast
+        0xc1: Parser.start()
+          .uint16be("index")
+          .namely("instanceof")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // instanceof
+        0xc2: Parser.start()
+          .namely("monitorenter")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // monitorenter
+        0xc3: Parser.start()
+          .namely("monitorexit")
+          .buffer("length", { length: () => 0, formatter: () => 1 }), // monitorexit
         0xc4: "wide", // wide
         0xc5: Parser.start()
           .uint16be("index")
           .uint8("dimensions")
-          .namely("multianewarray"), // multianewarray
-        0xc6: Parser.start().int16be("branchoffset").namely("ifnull"), // ifnull
-        0xc7: Parser.start().int16be("branchoffset").namely("ifnonnull"), // ifnonnull
-        0xc8: Parser.start().int32be("branchoffset").namely("goto_w"), // goto_w
-        0xc9: Parser.start().int32be("branchoffset").namely("jsr_w") // jsr_w
+          .namely("multianewarray")
+          .buffer("length", { length: () => 0, formatter: () => 4 }), // multianewarray
+        0xc6: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifnull")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifnull
+        0xc7: Parser.start()
+          .int16be("branchoffset")
+          .namely("ifnonnull")
+          .buffer("length", { length: () => 0, formatter: () => 3 }), // ifnonnull
+        0xc8: Parser.start()
+          .int32be("branchoffset")
+          .namely("goto_w")
+          .buffer("length", { length: () => 0, formatter: () => 5 }), // goto_w
+        0xc9: Parser.start()
+          .int32be("branchoffset")
+          .namely("jsr_w")
+          .buffer("length", { length: () => 0, formatter: () => 5 }) // jsr_w
       }
     });
   const BytecodeParser = Parser.start()
@@ -727,6 +1228,7 @@ var ConstantClassInfo = Parser.start().uint16be("name_index");
     .nest("code", {
       type: BytecodeParser
     })
+    //.array("code", { type: "uint8", length: "code_length" })
     .uint16be("exception_table_length")
     .array("exception_table", {
       type: Parser.start()
