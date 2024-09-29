@@ -13,8 +13,8 @@
     "disassembler",
     "class file"
   ],
-  "author": "Your Name",
-  "license": "ISC",
+  "author": "kreijstal",
+  "license": "GPLv3",
   "description": "A command-line tool to disassemble Java class files.",
   "dependencies": {
     "binary-parser": "^2.2.1"
