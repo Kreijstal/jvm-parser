@@ -1,4 +1,6 @@
-const { decompileClassFile, ClassFile, opcodeNames } = require('./your-module-path'); // Adjust the path as necessary
+const { decompileClassFile } = require('./dissasembleClass');
+const { ClassFile } = require('./parsers');
+const opcodeNames = require('./opcodeNames');
 
 /**
  * Get the disassembled string of a class file.
