@@ -44,4 +44,4 @@ fs.readFile('path/to/your/hello.class', (err, data) => {
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the AGPLv3 License.

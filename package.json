@@ -14,7 +14,7 @@
     "class file"
   ],
   "author": "kreijstal",
-  "license": "GPLv3",
+  "license": "AGPLv3",
   "description": "A command-line tool to disassemble Java class files.",
   "dependencies": {
     "binary-parser": "^2.2.1"
