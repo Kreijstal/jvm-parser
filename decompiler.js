@@ -6,7 +6,7 @@ const { decompileClassFile, ClassFile, opcodeNames } = require('./your-module-pa
  * @returns {string} - The disassembled string.
  */
 function getDisassembled(cafebabe) {
-    return decompileClassFile(ClassFile.parse(cafebabe), opcodeNames);
+    return decompileClassFile(ClassFile.parse(new Uint8Array(cafebabe)), opcodeNames);
 }
 
 /**
@@ -15,7 +15,7 @@ function getDisassembled(cafebabe) {
  * @returns {Object} - The AST representation.
  */
 function getAST(cafebabe) {
-    return ClassFile.parse(cafebabe);
+    return ClassFile.parse(new Uint8Array(cafebabe));
 }
 
 module.exports = {
