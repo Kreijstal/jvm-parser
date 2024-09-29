@@ -22,7 +22,7 @@ npm link
 To disassemble a class file, use the following command:
 
 ```bash
-disassembler path/to/your/hello.class
+npx -p jvm_parser disassembler path/to/your/hello.class
 ```
 
 This will output the disassembled string of the specified class file.
@@ -32,7 +32,7 @@ This will output the disassembled string of the specified class file.
 To get the AST form of a class file, you can use the `getAST` function from the `decompiler.js` module in your Node.js application:
 
 ```javascript
-const { getAST } = require('./decompiler');
+const { getAST } = require('jvm-parser');
 const fs = require('fs');
 
 fs.readFile('path/to/your/hello.class', (err, data) => {
