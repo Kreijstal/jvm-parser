@@ -21,7 +21,7 @@ fs.readFile(classFilePath, (err, data) => {
 
     try {
         // Get the disassembled string
-        const disassembled = getDisassembled(data);
+        const disassembled = getDisassembled(new Uint8Array(data));
         console.log(disassembled);
     } catch (error) {
         console.error(`Error disassembling file: ${error.message}`);
