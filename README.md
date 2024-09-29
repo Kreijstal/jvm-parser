@@ -22,7 +22,7 @@ npm link
 To disassemble a class file, use the following command:
 
 ```bash
-npx -p jvm_parser disassembler path/to/your/hello.class
+npx disassembler path/to/your/hello.class
 ```
 
 This will output the disassembled string of the specified class file.
