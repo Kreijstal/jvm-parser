@@ -1,4 +1,4 @@
-opcodeNames = ({
+const opcodeNames = ({
   0x00: "nop",
   0x01: "aconst_null",
   0x02: "iconst_m1",
@@ -204,4 +204,6 @@ opcodeNames = ({
   0xca: "breakpoint",
   0xfe: "impdep1",
   0xff: "impdep2"
-})
+});
+
+module.exports = opcodeNames;
