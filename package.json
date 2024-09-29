@@ -8,8 +8,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["jvm", "disassembler", "class file"],
+  "keywords": [
+    "jvm",
+    "disassembler",
+    "class file"
+  ],
   "author": "Your Name",
   "license": "ISC",
-  "description": "A command-line tool to disassemble Java class files."
+  "description": "A command-line tool to disassemble Java class files.",
+  "dependencies": {
+    "binary-parser": "^2.2.1"
+  }
 }
