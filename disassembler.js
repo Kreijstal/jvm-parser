@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getDisassembled } = require('./decompiler');
+const { getDisassembled } = require('./lib');
 
 // Get the class file path from command line arguments
 const classFilePath = process.argv[2];
