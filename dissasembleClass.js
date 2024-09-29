@@ -1,3 +1,6 @@
+module.exports = {
+  decompileClassFile
+};
 
 function decompileClassFile(x, opcodeNames) {
   const constantPool = x.constant_pool.entries;
