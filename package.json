@@ -16,6 +16,10 @@
   "author": "kreijstal",
   "license": "AGPLv3",
   "description": "A command-line tool to disassemble Java class files.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kreijstal/jvm-parser.git"
+  },
   "dependencies": {
     "binary-parser": "^2.2.1"
   }
