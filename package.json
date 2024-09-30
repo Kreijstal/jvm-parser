@@ -6,7 +6,7 @@
     "disassembler": "./disassembler.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class"
   },
   "keywords": [
     "jvm",
