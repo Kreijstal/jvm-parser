@@ -1,4 +1,4 @@
-const { decompileClassFile } = require('./dissasembleClass');
+const { parseClassFile, disassemble } = require('./dissasembleClass');
 const { ClassFile } = require('./parsers');
 const opcodeNames = require('./opcodeNames');
 
@@ -8,7 +8,8 @@ const opcodeNames = require('./opcodeNames');
  * @returns {string} - The disassembled string.
  */
 function getDisassembled(cafebabe) {
-    return decompileClassFile(ClassFile.parse(cafebabe), opcodeNames);
+    const clazz=parseClassFile(ClassFile.parse(cafebabe),opcodeNames);
+    return disassemble(clazz.ast,clazz.constantPool);
 }
 
 /**
@@ -17,10 +18,20 @@ function getDisassembled(cafebabe) {
  * @returns {Object} - The AST representation.
  */
 function getAST(cafebabe) {
+    return parseClassFile(ClassFile.parse(cafebabe),opcodeNames);
+}
+
+/**
+ * parse Class and get the struct properties
+ * @param {Uint8Array} cafebabe - The binary content of the class file.
+ * @returns {Object} - The classfile "struct".
+ */
+function getClassFileStruct(cafebabe) {
     return ClassFile.parse(cafebabe);
 }
 
 module.exports = {
     getDisassembled,
-    getAST
+    getAST,
+    getClassFileStruct
 };
