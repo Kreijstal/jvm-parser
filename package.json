@@ -6,7 +6,7 @@
     "disassembler": "./disassembler.js"
   },
   "scripts": {
-    "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class"
+    "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class > test/actual_output.txt && diff test/actual_output.txt test/expected_output.txt"
   },
   "keywords": [
     "jvm",
