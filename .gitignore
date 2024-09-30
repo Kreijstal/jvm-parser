@@ -1,4 +1,4 @@
 .aider*
 node_modules/
 package-lock.json
-test/HelloWorld.class
+test/*.class
