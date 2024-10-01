@@ -1,6 +1,6 @@
 {
   "name": "jvm_parser",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "lib.js",
   "bin": {
     "disassembler": "./disassembler.js"
