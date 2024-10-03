@@ -9,10 +9,10 @@ A command-line tool to disassemble Java class files and obtain their Abstract Sy
 
 ## Installation
 
-To install the tool, clone the repository and run the following command to link the package:
+To install the tool, use the following command:
 
 ```bash
-npm link
+npm install jvm_parser
 ```
 
 ## Usage
