@@ -1,5 +1,5 @@
 Compiled from "HelloWorld.java"
-public synchronized class HelloWorld extends java.lang.Object {
+public super class HelloWorld extends java.lang.Object {
 
   public V <init>();
     0: aload_0

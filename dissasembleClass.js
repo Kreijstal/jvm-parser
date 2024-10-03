@@ -83,20 +83,52 @@ function disassemble(ast, constantPool) {
     return null;
   }
 
-  function getAccessFlags(flags) {
+  function getAccessFlags(flags, context = "class") {
     const access = [];
-    if (flags & 0x0001) access.push("public");
-    if (flags & 0x0002) access.push("private");
-    if (flags & 0x0004) access.push("protected");
-    if (flags & 0x0008) access.push("static");
-    if (flags & 0x0010) access.push("final");
-    if (flags & 0x0020) access.push("synchronized");
-    if (flags & 0x0040) access.push("volatile");
-    if (flags & 0x0080) access.push("transient");
-    if (flags & 0x0100) access.push("native");
-    if (flags & 0x0200) access.push("interface");
-    if (flags & 0x0400) access.push("abstract");
-    if (flags & 0x0800) access.push("strict");
+    const flagMap = {
+      class: {
+        0x0001: "public",
+        0x0010: "final",
+        0x0020: "super",
+        0x0200: "interface",
+        0x0400: "abstract",
+        0x1000: "synthetic",
+        0x2000: "annotation",
+        0x4000: "enum",
+        0x8000: "module"
+      },
+      method: {
+        0x0001: "public",
+        0x0002: "private",
+        0x0004: "protected",
+        0x0008: "static",
+        0x0010: "final",
+        0x0020: "synchronized",
+        0x0040: "bridge",
+        0x0080: "varargs",
+        0x0100: "native",
+        0x0400: "abstract",
+        0x0800: "strictfp",
+        0x1000: "synthetic"
+      },
+      field: {
+        0x0001: "public",
+        0x0002: "private",
+        0x0004: "protected",
+        0x0008: "static",
+        0x0010: "final",
+        0x0040: "volatile",
+        0x0080: "transient",
+        0x1000: "synthetic",
+        0x4000: "enum"
+      }
+    };
+
+    for (const flag in flagMap[context]) {
+      if (flags & flag) {
+        access.push(flagMap[context][flag]);
+      }
+    }
     return access.join(" ");
   }
 
@@ -106,14 +138,14 @@ function disassemble(ast, constantPool) {
   }
 
   // Class declaration
-  const classAccess = getAccessFlags(ast.accessFlags);
+  const classAccess = getAccessFlags(ast.accessFlags, "class");
   const className = ast.className;
   const superClassName = ast.superClassName;
   output.push(`${classAccess} class ${className} extends ${superClassName} {`);
 
   // Fields
   for (const field of ast.fields) {
-    const fieldAccess = getAccessFlags(field.accessFlags);
+    const fieldAccess = getAccessFlags(field.accessFlags, "field");
     const fieldDescriptor = field.descriptor;
     output.push(`  ${fieldDescriptor} ${field.name};`);
   }
@@ -121,7 +153,7 @@ function disassemble(ast, constantPool) {
 
   // Methods
   for (const method of ast.methods) {
-    const methodAccess = getAccessFlags(method.accessFlags);
+    const methodAccess = getAccessFlags(method.accessFlags, "method");
     const methodDescriptor = method.descriptor;
     const methodName = method.name;
     const exceptions = method.exceptions;
@@ -298,7 +330,8 @@ function disassemble(ast, constantPool) {
   return output.join("\n");
 }
 
-function parseClassFile(jsonObject,opcodeNames) {
+
+function parseClassFile(jsonObject, opcodeNames) {
   const cpEntries = jsonObject.constant_pool.entries;
   const constantPool = []; // Use 1-based indexing for constant pool
 
@@ -383,7 +416,9 @@ function parseClassFile(jsonObject,opcodeNames) {
     superClassName: getClassName(jsonObject.super_class),
     accessFlags: jsonObject.access_flags,
     fields: [],
-    methods: []
+    methods: [],
+    major_version: jsonObject.major_version,
+    minor_version: jsonObject.minor_version
   };
 
   // Resolve source file name
