@@ -15,7 +15,17 @@ To install the tool, use the following command:
 npm install jvm_parser
 ```
 
-## Usage
+## Development Installation
+
+To install the tool from the master branch for development purposes, use the following commands:
+
+```bash
+git clone https://github.com/Kreijstal/jvm-parser.git
+cd jvm-parser
+npm install
+```
+
+This will clone the repository, navigate into the project directory, and install the necessary dependencies.
 
 ### Disassemble a Class File
 
