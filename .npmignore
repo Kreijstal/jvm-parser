@@ -1,7 +1,7 @@
 test/
 .gitignore
 .aider*
-.github/workflows/
+.github/
 node_modules/
 package-lock.json
 *.class
