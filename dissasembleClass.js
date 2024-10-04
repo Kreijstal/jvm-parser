@@ -292,6 +292,9 @@ function disassemble(ast, constantPool) {
           commentText = `int ${cpEntry.info.bytes}`;
         } else if (cpEntry.tag === 4) {
           commentText = `float ${cpEntry.info.bytes}`;
+        } else if (cpEntry.tag === 7) {
+          const className = getClassName(cpEntry.info.name_index);
+          commentText = `Class ${className}`;
         }
         if (commentText) {
           line = line.padEnd(40) + ` // ${commentText}`;
@@ -518,6 +521,9 @@ function parseClassFile(jsonObject, opcodeNames) {
                 instruction.comment = `int ${cpEntry.info.bytes}`;
               } else if (cpEntry.tag === 4) {
                 instruction.comment = `float ${cpEntry.info.bytes}`;
+              } else if (cpEntry.tag === 7) {
+                const className = getClassName(cpEntry.info.name_index);
+                instruction.comment = `Class ${className}`;
               }
             }
           } else if (opcode === 197) {

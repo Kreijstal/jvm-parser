@@ -468,7 +468,7 @@ const TableswitchParser = Parser.start()
       return this.high - this.low + 1;
     },
     formatter: function (att) {
-      return att.map((v) => v + this.offset);
+      return att.map((v) => v);
     },
   })
   .buffer("length", {
