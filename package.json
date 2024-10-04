@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "main": "lib.js",
   "bin": {
-    "disassembler": "./disassembler.js"
+    "disassembler": "disassembler.js"
   },
   "scripts": {
     "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class > test/actual_output.txt && diff test/actual_output.txt test/expected_output.txt"
@@ -18,7 +18,7 @@
   "description": "A command-line tool to disassemble Java class files.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kreijstal/jvm-parser.git"
+    "url": "git+https://github.com/Kreijstal/jvm-parser.git"
   },
   "dependencies": {
     "binary-parser": "^2.2.1"
