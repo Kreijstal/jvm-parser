@@ -434,8 +434,9 @@ const WideInstructionParser = Parser.start()
   .buffer("length", {
     length: () => 0,
     formatter: function () {
-      // Length of what WideInstructionParser parses: 1 (modifiedOpcode) + 2 (index) + optional 2 (const for iinc)
-      return 1 + 2 + (this.modifiedOpcode === 0x84 ? 2 : 0);
+  // Total length INCLUDING the wide opcode itself:
+  // 1 (wide) + 1 (modifiedOpcode) + 2 (index) + optional 2 (const for iinc)
+  return 1 + 1 + 2 + (this.modifiedOpcode === 0x84 ? 2 : 0);
     },
   });
 
