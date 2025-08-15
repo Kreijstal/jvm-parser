@@ -303,6 +303,15 @@ function disassemble(ast, constantPool) {
         line += ` ${operands.index}`;
       } else if ("value" in operands) {
         line += ` ${operands.value}`;
+      } else if ("byte" in operands) { // bipush immediate byte
+        line += ` ${operands.byte}`;
+      }
+
+      // For widened iinc (iinc_w) include constant
+      if (opcodeName === 'iinc_w' && 'const' in operands) {
+        line += ` ${operands.const}`;
+      } else if (opcodeName === 'iinc' && 'const' in operands) {
+        line += ` ${operands.index} ${operands.const}`; // existing narrow iinc already has index and const but index printed earlier
       }
 
       output.push(line);
@@ -467,15 +476,36 @@ function parseClassFile(jsonObject, opcodeNames) {
       for (const inst of codeInfo.code.instructions) {
         const opcode = inst.instruction.opcode;
         const opcodeInfo = inst.instruction.info || {};
-        const opcodeLength = opcodeInfo.length || 1;
+        const opcodeLength = opcodeInfo.length || 1; // includes wide combined length from parser
 
-        const instruction = {
-          pc,
-          opcode,
-          opcodeName: opcodeNames[opcode], // To be resolved later
-          operands: opcodeInfo,
-          comment: null
-        };
+        // Handle wide specially: we want a synthetic widened opcode name like istore_w
+        let instruction;
+        if (opcode === 0xc4) { // wide
+          const modified = opcodeInfo.modifiedOpcode;
+          const widenedNameBase = opcodeNames[modified];
+            // Map base mnemonic to widened form suffix, javap uses <mnemonic>_w (except iinc which becomes iinc_w)
+          const widenedName = widenedNameBase + "_w";
+          // Build operand structure
+          const wideOperands = { index: opcodeInfo.index };
+          if (modified === 0x84) { // iinc
+            wideOperands.const = opcodeInfo.info.const; // 16-bit const already parsed
+          }
+          instruction = {
+            pc,
+            opcode: modified,
+            opcodeName: widenedName,
+            operands: wideOperands,
+            comment: null
+          };
+        } else {
+          instruction = {
+            pc,
+            opcode,
+            opcodeName: opcodeNames[opcode], // To be resolved later
+            operands: opcodeInfo,
+            comment: null
+          };
+        }
 
         // Resolve operands for specific opcodes
         if ("index" in opcodeInfo) {
@@ -533,8 +563,8 @@ function parseClassFile(jsonObject, opcodeNames) {
           }
         }
 
-        instructions.push(instruction);
-        pc += opcodeLength; // Simplification; in reality, instruction lengths vary
+  instructions.push(instruction);
+  pc += opcodeLength; // length already accounts for wide expanded length
       }
 
       methodInfo.code = {
