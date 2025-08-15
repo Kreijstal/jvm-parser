@@ -411,7 +411,6 @@ const AttributeInfo = Parser.start()
   });
 
 const WideInstructionParser = Parser.start()
-  .uint8("opcode", { assert: 0xc4 }) // wide opcode
   .uint8("modifiedOpcode")
   .uint16be("index")
   .choice("info", {
@@ -435,7 +434,8 @@ const WideInstructionParser = Parser.start()
   .buffer("length", {
     length: () => 0,
     formatter: function () {
-      return 1 + 1 + 1 + 2 + (this.modifiedOpcode == 0x84 ? 2 : 0);
+      // Length of what WideInstructionParser parses: 1 (modifiedOpcode) + 2 (index) + optional 2 (const for iinc)
+      return 1 + 2 + (this.modifiedOpcode === 0x84 ? 2 : 0);
     },
   });
 
@@ -1155,7 +1155,7 @@ const InstructionParser = Parser.start()
       0xc3: Parser.start()
         .namely("monitorexit")
         .buffer("length", { length: () => 0, formatter: () => 1 }), // monitorexit
-      0xc4: "wide", // wide
+      0xc4: WideInstructionParser, // wide
       0xc5: Parser.start()
         .uint16be("index")
         .uint8("dimensions")
@@ -1181,34 +1181,13 @@ const InstructionParser = Parser.start()
   });
 
 const BytecodeParser = Parser.start()
-  .useContextVars()
   .array("instructions", {
-    type: Parser.start().choice("instruction", {
-      tag: function () {
-        switch (
-          this.opcode // Access the "opcode" property of the current item
-        ) {
-          case 0xc4:
-            return 0; // WideInstructionParser
-          case 0xaa:
-            return 1; // TableswitchParser
-          case 0xab:
-            return 2; // LookupswitchParser
-          default:
-            return 3; // InstructionParser (default)
-        }
-      },
-      choices: [
-        // Use an array of choices (indexed numerically)
-        WideInstructionParser,
-        TableswitchParser,
-        LookupswitchParser,
-        InstructionParser,
-      ],
-    }),
-    lengthInBytes: function (item) {
-      return this.$parent.code_length;
-    },
+      type: Parser.start().nest("instruction", {
+          type: InstructionParser
+      }),
+      lengthInBytes: function() {
+        return this.$parent.code_length;
+      }
   });
 
 CodeAttribute = CodeAttribute.useContextVars()
@@ -1301,7 +1280,7 @@ const ClassFile = Parser.start()
     type: AttributeInfo,
     length: "attributes_count",
   });
-  module.exports= {
+module.exports= {
     CodeAttribute,
     ConstantClassInfo,
     ConstantFieldrefInfo,
