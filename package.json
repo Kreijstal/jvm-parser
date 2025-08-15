@@ -6,7 +6,8 @@
     "disassembler": "disassembler.js"
   },
   "scripts": {
-    "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class > test/actual_output.txt && diff test/actual_output.txt test/expected_output.txt"
+    "test": "javac test/HelloWorld.java && npx disassembler test/HelloWorld.class > test/actual_output.txt && diff -u test/actual_output.txt test/expected_output.txt",
+    "test:wide": "javac test/RealWide.java && npx disassembler test/RealWide.class > test/actual_output_wide.txt && diff -u test/actual_output_wide.txt test/expected_output_wide.txt"
   },
   "keywords": [
     "jvm",

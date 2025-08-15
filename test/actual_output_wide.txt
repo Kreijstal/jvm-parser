@@ -1,0 +1,529 @@
+Compiled from "RealWide.java"
+public class RealWide extends java.lang.Object {
+
+  public V <init>();
+    0: aload_0
+    1: invokespecial #1                      // Method java.lang.Object.<init>:()V
+    4: return
+
+  public static V main([Ljava/lang/String;);
+    0: iconst_0
+    1: istore_1
+    2: iconst_1
+    3: istore_2
+    4: iconst_2
+    5: istore_3
+    6: iconst_3
+    7: istore 4
+    9: iconst_4
+    10: istore 5
+    12: iconst_5
+    13: istore 6
+    15: bipush
+    17: istore 7
+    19: bipush
+    21: istore 8
+    23: bipush
+    25: istore 9
+    27: bipush
+    29: istore 10
+    31: bipush
+    33: istore 11
+    35: bipush
+    37: istore 12
+    39: bipush
+    41: istore 13
+    43: bipush
+    45: istore 14
+    47: bipush
+    49: istore 15
+    51: bipush
+    53: istore 16
+    55: bipush
+    57: istore 17
+    59: bipush
+    61: istore 18
+    63: bipush
+    65: istore 19
+    67: bipush
+    69: istore 20
+    71: bipush
+    73: istore 21
+    75: bipush
+    77: istore 22
+    79: bipush
+    81: istore 23
+    83: bipush
+    85: istore 24
+    87: bipush
+    89: istore 25
+    91: bipush
+    93: istore 26
+    95: bipush
+    97: istore 27
+    99: bipush
+    101: istore 28
+    103: bipush
+    105: istore 29
+    107: bipush
+    109: istore 30
+    111: bipush
+    113: istore 31
+    115: bipush
+    117: istore 32
+    119: bipush
+    121: istore 33
+    123: bipush
+    125: istore 34
+    127: bipush
+    129: istore 35
+    131: bipush
+    133: istore 36
+    135: bipush
+    137: istore 37
+    139: bipush
+    141: istore 38
+    143: bipush
+    145: istore 39
+    147: bipush
+    149: istore 40
+    151: bipush
+    153: istore 41
+    155: bipush
+    157: istore 42
+    159: bipush
+    161: istore 43
+    163: bipush
+    165: istore 44
+    167: bipush
+    169: istore 45
+    171: bipush
+    173: istore 46
+    175: bipush
+    177: istore 47
+    179: bipush
+    181: istore 48
+    183: bipush
+    185: istore 49
+    187: bipush
+    189: istore 50
+    191: bipush
+    193: istore 51
+    195: bipush
+    197: istore 52
+    199: bipush
+    201: istore 53
+    203: bipush
+    205: istore 54
+    207: bipush
+    209: istore 55
+    211: bipush
+    213: istore 56
+    215: bipush
+    217: istore 57
+    219: bipush
+    221: istore 58
+    223: bipush
+    225: istore 59
+    227: bipush
+    229: istore 60
+    231: bipush
+    233: istore 61
+    235: bipush
+    237: istore 62
+    239: bipush
+    241: istore 63
+    243: bipush
+    245: istore 64
+    247: bipush
+    249: istore 65
+    251: bipush
+    253: istore 66
+    255: bipush
+    257: istore 67
+    259: bipush
+    261: istore 68
+    263: bipush
+    265: istore 69
+    267: bipush
+    269: istore 70
+    271: bipush
+    273: istore 71
+    275: bipush
+    277: istore 72
+    279: bipush
+    281: istore 73
+    283: bipush
+    285: istore 74
+    287: bipush
+    289: istore 75
+    291: bipush
+    293: istore 76
+    295: bipush
+    297: istore 77
+    299: bipush
+    301: istore 78
+    303: bipush
+    305: istore 79
+    307: bipush
+    309: istore 80
+    311: bipush
+    313: istore 81
+    315: bipush
+    317: istore 82
+    319: bipush
+    321: istore 83
+    323: bipush
+    325: istore 84
+    327: bipush
+    329: istore 85
+    331: bipush
+    333: istore 86
+    335: bipush
+    337: istore 87
+    339: bipush
+    341: istore 88
+    343: bipush
+    345: istore 89
+    347: bipush
+    349: istore 90
+    351: bipush
+    353: istore 91
+    355: bipush
+    357: istore 92
+    359: bipush
+    361: istore 93
+    363: bipush
+    365: istore 94
+    367: bipush
+    369: istore 95
+    371: bipush
+    373: istore 96
+    375: bipush
+    377: istore 97
+    379: bipush
+    381: istore 98
+    383: bipush
+    385: istore 99
+    387: bipush
+    389: istore 100
+    391: bipush
+    393: istore 101
+    395: bipush
+    397: istore 102
+    399: bipush
+    401: istore 103
+    403: bipush
+    405: istore 104
+    407: bipush
+    409: istore 105
+    411: bipush
+    413: istore 106
+    415: bipush
+    417: istore 107
+    419: bipush
+    421: istore 108
+    423: bipush
+    425: istore 109
+    427: bipush
+    429: istore 110
+    431: bipush
+    433: istore 111
+    435: bipush
+    437: istore 112
+    439: bipush
+    441: istore 113
+    443: bipush
+    445: istore 114
+    447: bipush
+    449: istore 115
+    451: bipush
+    453: istore 116
+    455: bipush
+    457: istore 117
+    459: bipush
+    461: istore 118
+    463: bipush
+    465: istore 119
+    467: bipush
+    469: istore 120
+    471: bipush
+    473: istore 121
+    475: bipush
+    477: istore 122
+    479: bipush
+    481: istore 123
+    483: bipush
+    485: istore 124
+    487: bipush
+    489: istore 125
+    491: bipush
+    493: istore 126
+    495: bipush
+    497: istore 127
+    499: bipush
+    501: istore 128
+    503: sipush 128
+    506: istore 129
+    508: sipush 129
+    511: istore 130
+    513: sipush 130
+    516: istore 131
+    518: sipush 131
+    521: istore 132
+    523: sipush 132
+    526: istore 133
+    528: sipush 133
+    531: istore 134
+    533: sipush 134
+    536: istore 135
+    538: sipush 135
+    541: istore 136
+    543: sipush 136
+    546: istore 137
+    548: sipush 137
+    551: istore 138
+    553: sipush 138
+    556: istore 139
+    558: sipush 139
+    561: istore 140
+    563: sipush 140
+    566: istore 141
+    568: sipush 141
+    571: istore 142
+    573: sipush 142
+    576: istore 143
+    578: sipush 143
+    581: istore 144
+    583: sipush 144
+    586: istore 145
+    588: sipush 145
+    591: istore 146
+    593: sipush 146
+    596: istore 147
+    598: sipush 147
+    601: istore 148
+    603: sipush 148
+    606: istore 149
+    608: sipush 149
+    611: istore 150
+    613: sipush 150
+    616: istore 151
+    618: sipush 151
+    621: istore 152
+    623: sipush 152
+    626: istore 153
+    628: sipush 153
+    631: istore 154
+    633: sipush 154
+    636: istore 155
+    638: sipush 155
+    641: istore 156
+    643: sipush 156
+    646: istore 157
+    648: sipush 157
+    651: istore 158
+    653: sipush 158
+    656: istore 159
+    658: sipush 159
+    661: istore 160
+    663: sipush 160
+    666: istore 161
+    668: sipush 161
+    671: istore 162
+    673: sipush 162
+    676: istore 163
+    678: sipush 163
+    681: istore 164
+    683: sipush 164
+    686: istore 165
+    688: sipush 165
+    691: istore 166
+    693: sipush 166
+    696: istore 167
+    698: sipush 167
+    701: istore 168
+    703: sipush 168
+    706: istore 169
+    708: sipush 169
+    711: istore 170
+    713: sipush 170
+    716: istore 171
+    718: sipush 171
+    721: istore 172
+    723: sipush 172
+    726: istore 173
+    728: sipush 173
+    731: istore 174
+    733: sipush 174
+    736: istore 175
+    738: sipush 175
+    741: istore 176
+    743: sipush 176
+    746: istore 177
+    748: sipush 177
+    751: istore 178
+    753: sipush 178
+    756: istore 179
+    758: sipush 179
+    761: istore 180
+    763: sipush 180
+    766: istore 181
+    768: sipush 181
+    771: istore 182
+    773: sipush 182
+    776: istore 183
+    778: sipush 183
+    781: istore 184
+    783: sipush 184
+    786: istore 185
+    788: sipush 185
+    791: istore 186
+    793: sipush 186
+    796: istore 187
+    798: sipush 187
+    801: istore 188
+    803: sipush 188
+    806: istore 189
+    808: sipush 189
+    811: istore 190
+    813: sipush 190
+    816: istore 191
+    818: sipush 191
+    821: istore 192
+    823: sipush 192
+    826: istore 193
+    828: sipush 193
+    831: istore 194
+    833: sipush 194
+    836: istore 195
+    838: sipush 195
+    841: istore 196
+    843: sipush 196
+    846: istore 197
+    848: sipush 197
+    851: istore 198
+    853: sipush 198
+    856: istore 199
+    858: sipush 199
+    861: istore 200
+    863: sipush 200
+    866: istore 201
+    868: sipush 201
+    871: istore 202
+    873: sipush 202
+    876: istore 203
+    878: sipush 203
+    881: istore 204
+    883: sipush 204
+    886: istore 205
+    888: sipush 205
+    891: istore 206
+    893: sipush 206
+    896: istore 207
+    898: sipush 207
+    901: istore 208
+    903: sipush 208
+    906: istore 209
+    908: sipush 209
+    911: istore 210
+    913: sipush 210
+    916: istore 211
+    918: sipush 211
+    921: istore 212
+    923: sipush 212
+    926: istore 213
+    928: sipush 213
+    931: istore 214
+    933: sipush 214
+    936: istore 215
+    938: sipush 215
+    941: istore 216
+    943: sipush 216
+    946: istore 217
+    948: sipush 217
+    951: istore 218
+    953: sipush 218
+    956: istore 219
+    958: sipush 219
+    961: istore 220
+    963: sipush 220
+    966: istore 221
+    968: sipush 221
+    971: istore 222
+    973: sipush 222
+    976: istore 223
+    978: sipush 223
+    981: istore 224
+    983: sipush 224
+    986: istore 225
+    988: sipush 225
+    991: istore 226
+    993: sipush 226
+    996: istore 227
+    998: sipush 227
+    1001: istore 228
+    1003: sipush 228
+    1006: istore 229
+    1008: sipush 229
+    1011: istore 230
+    1013: sipush 230
+    1016: istore 231
+    1018: sipush 231
+    1021: istore 232
+    1023: sipush 232
+    1026: istore 233
+    1028: sipush 233
+    1031: istore 234
+    1033: sipush 234
+    1036: istore 235
+    1038: sipush 235
+    1041: istore 236
+    1043: sipush 236
+    1046: istore 237
+    1048: sipush 237
+    1051: istore 238
+    1053: sipush 238
+    1056: istore 239
+    1058: sipush 239
+    1061: istore 240
+    1063: sipush 240
+    1066: istore 241
+    1068: sipush 241
+    1071: istore 242
+    1073: sipush 242
+    1076: istore 243
+    1078: sipush 243
+    1081: istore 244
+    1083: sipush 244
+    1086: istore 245
+    1088: sipush 245
+    1091: istore 246
+    1093: sipush 246
+    1096: istore 247
+    1098: sipush 247
+    1101: istore 248
+    1103: sipush 248
+    1106: istore 249
+    1108: sipush 249
+    1111: istore 250
+    1113: sipush 250
+    1116: istore 251
+    1118: sipush 251
+    1121: istore 252
+    1123: sipush 252
+    1126: istore 253
+    1128: sipush 253
+    1131: istore 254
+    1133: sipush 254
+    1136: istore 255
+    1138: sipush 255
+    1141: istore_w 256
+    1145: sipush 256
+    1148: istore_w 257
+    1152: getstatic #7                       // Field java.lang.System.out:Ljava/io/PrintStream;
+    1155: iload_w 257
+    1159: invokevirtual #13                  // Method java.io.PrintStream.println:(I)V
+    1162: return
+
+}
