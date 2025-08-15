@@ -1,5 +1,7 @@
+const opcodeNames = require("./opcodeNames");
 module.exports = {
-  disassemble,parseClassFile
+  disassemble,
+  parseClassFile,
 };
 
 function disassemble(ast, constantPool) {
@@ -49,7 +51,7 @@ function disassemble(ast, constantPool) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -63,7 +65,7 @@ function disassemble(ast, constantPool) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -77,7 +79,7 @@ function disassemble(ast, constantPool) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -89,13 +91,12 @@ function disassemble(ast, constantPool) {
       class: {
         0x0001: "public",
         0x0010: "final",
-        0x0020: "super",
         0x0200: "interface",
         0x0400: "abstract",
         0x1000: "synthetic",
         0x2000: "annotation",
         0x4000: "enum",
-        0x8000: "module"
+        0x8000: "module",
       },
       method: {
         0x0001: "public",
@@ -109,7 +110,7 @@ function disassemble(ast, constantPool) {
         0x0100: "native",
         0x0400: "abstract",
         0x0800: "strictfp",
-        0x1000: "synthetic"
+        0x1000: "synthetic",
       },
       field: {
         0x0001: "public",
@@ -120,8 +121,8 @@ function disassemble(ast, constantPool) {
         0x0040: "volatile",
         0x0080: "transient",
         0x1000: "synthetic",
-        0x4000: "enum"
-      }
+        0x4000: "enum",
+      },
     };
 
     for (const flag in flagMap[context]) {
@@ -141,15 +142,21 @@ function disassemble(ast, constantPool) {
   const classAccess = getAccessFlags(ast.accessFlags, "class");
   const className = ast.className;
   const superClassName = ast.superClassName;
-  output.push(`${classAccess} class ${className} extends ${superClassName} {`);
+  let classDecl = `${classAccess} class ${className}`;
+  if (superClassName && superClassName !== "java.lang.Object") {
+    classDecl += ` extends ${superClassName}`;
+  }
+  output.push(classDecl + " {");
 
   // Fields
-  for (const field of ast.fields) {
-    const fieldAccess = getAccessFlags(field.accessFlags, "field");
-    const fieldDescriptor = field.descriptor;
-    output.push(`  ${fieldDescriptor} ${field.name};`);
+  if (ast.fields.length > 0) {
+    for (const field of ast.fields) {
+      const fieldAccess = getAccessFlags(field.accessFlags, "field");
+      const fieldDescriptor = field.descriptor;
+      output.push(`  ${fieldAccess} ${fieldDescriptor} ${field.name};`);
+    }
+    output.push("");
   }
-  output.push("");
 
   // Methods
   for (const method of ast.methods) {
@@ -158,27 +165,34 @@ function disassemble(ast, constantPool) {
     const methodName = method.name;
     const exceptions = method.exceptions;
 
-    // Simplify method signature for display purposes
-    const returnType = methodDescriptor.substring(
-      methodDescriptor.lastIndexOf(")") + 1
-    );
-    const methodSignature = `${methodAccess} ${returnType} ${methodName}(${methodDescriptor.substring(
-      1,
-      methodDescriptor.lastIndexOf(")")
-    )});`;
-
-    let methodLine = `  ${methodSignature}`;
-    if (exceptions && exceptions.length > 0) {
-      methodLine += ` throws ${exceptions.join(", ")}`;
+    let methodSignature;
+    if (methodName === "<init>") {
+      methodSignature = `  ${methodAccess} ${className}(${methodDescriptor.substring(
+        1,
+        methodDescriptor.lastIndexOf(")")
+      )});`;
+    } else {
+      const returnType = methodDescriptor.substring(
+        methodDescriptor.lastIndexOf(")") + 1
+      );
+      const args = methodDescriptor.substring(
+        1,
+        methodDescriptor.lastIndexOf(")")
+      );
+      methodSignature = `  ${methodAccess} ${returnType} ${methodName}(${args});`;
     }
-    output.push(methodLine);
+
+    if (exceptions && exceptions.length > 0) {
+      methodSignature += ` throws ${exceptions.join(", ")}`;
+    }
+    output.push(methodSignature);
 
     // Output Code:
     if (method.code) {
+      output.push("    Code:");
       const codeOutput = processMethod(method);
-      codeOutput.split("\n").forEach((line) => output.push(`    ${line}`));
+      codeOutput.split("\n").forEach((line) => output.push(`      ${line}`));
     }
-    output.push("");
   }
 
   output.push("}");
@@ -198,19 +212,24 @@ function disassemble(ast, constantPool) {
       let line = `${pc}: ${opcodeName}`;
 
       // Process operands
-      if (opcodeName === "tableswitch") {
+      if (opcodeName === "wide") {
+        const wideOpcodeName = opcodeNames[operands.modifiedOpcode];
+        line = `${pc}: ${wideOpcodeName}_w ${operands.index}`;
+        if (operands.info && "const" in operands.info) {
+          line += `, ${operands.info.const}`;
+        }
+      } else if (opcodeName === "tableswitch") {
         // Handle 'tableswitch'
-        line += "   { // ";
-        line += `${operands.low} to ${operands.high}`;
+        line += `   { // ${operands.low} to ${operands.high}`;
         output.push(line);
 
         for (let i = 0; i < operands.jumpOffsets.length; i++) {
           const value = operands.low + i;
           const targetPc = operands.jumpOffsets[i];
-          output.push(`  res        ${value}: ${targetPc}`);
+          output.push(`         ${value}: ${targetPc}`);
         }
         const defaultPc = operands.default;
-        output.push(`      default: ${defaultPc}`);
+        output.push(`       default: ${defaultPc}`);
         output.push("     }");
         continue;
       } else if (
@@ -233,7 +252,7 @@ function disassemble(ast, constantPool) {
           "new",
           "anewarray",
           "checkcast",
-          "instanceof"
+          "instanceof",
         ].includes(opcodeName)
       ) {
         const index = operands.index;
@@ -310,8 +329,8 @@ function disassemble(ast, constantPool) {
 
     // Output exception table
     if (method.code.exceptionTable && method.code.exceptionTable.length > 0) {
-      output.push("Exception table:");
-      output.push("   from    to  target type");
+      output.push("  Exception table:");
+      output.push("     from    to  target type");
       for (const exception of method.code.exceptionTable) {
         const startPc = exception.start_pc;
         const endPc = exception.end_pc;
@@ -322,7 +341,7 @@ function disassemble(ast, constantPool) {
           catchTypeName = getClassName(catchTypeIndex);
         }
         output.push(
-          `      ${startPc}    ${endPc}    ${handlerPc}   Class ${catchTypeName}`
+          `        ${startPc}    ${endPc}    ${handlerPc}   Class ${catchTypeName}`
         );
       }
     }
@@ -332,7 +351,6 @@ function disassemble(ast, constantPool) {
 
   return output.join("\n");
 }
-
 
 function parseClassFile(jsonObject, opcodeNames) {
   const cpEntries = jsonObject.constant_pool.entries;
@@ -378,7 +396,7 @@ function parseClassFile(jsonObject, opcodeNames) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -392,7 +410,7 @@ function parseClassFile(jsonObject, opcodeNames) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -406,7 +424,7 @@ function parseClassFile(jsonObject, opcodeNames) {
       return {
         className,
         name: nameAndType.name,
-        descriptor: nameAndType.descriptor
+        descriptor: nameAndType.descriptor,
       };
     }
     return null;
@@ -421,7 +439,7 @@ function parseClassFile(jsonObject, opcodeNames) {
     fields: [],
     methods: [],
     major_version: jsonObject.major_version,
-    minor_version: jsonObject.minor_version
+    minor_version: jsonObject.minor_version,
   };
 
   // Resolve source file name
@@ -439,7 +457,7 @@ function parseClassFile(jsonObject, opcodeNames) {
     ast.fields.push({
       name: fieldName,
       descriptor: fieldDescriptor,
-      accessFlags: field.access_flags
+      accessFlags: field.access_flags,
     });
   }
 
@@ -452,7 +470,7 @@ function parseClassFile(jsonObject, opcodeNames) {
       descriptor: methodDescriptor,
       accessFlags: method.access_flags,
       code: null,
-      exceptions: []
+      exceptions: [],
     };
 
     // Find the Code attribute
@@ -463,21 +481,17 @@ function parseClassFile(jsonObject, opcodeNames) {
       const codeInfo = codeAttr.info;
       const instructions = [];
       let pc = 0;
-
       for (const inst of codeInfo.code.instructions) {
         const opcode = inst.instruction.opcode;
         const opcodeInfo = inst.instruction.info || {};
-        const opcodeLength = opcodeInfo.length || 1;
-
         const instruction = {
           pc,
           opcode,
-          opcodeName: opcodeNames[opcode], // To be resolved later
+          opcodeName: opcodeNames[opcode],
           operands: opcodeInfo,
-          comment: null
+          comment: null,
         };
 
-        // Resolve operands for specific opcodes
         if ("index" in opcodeInfo) {
           const index = opcodeInfo.index;
           if (
@@ -486,7 +500,6 @@ function parseClassFile(jsonObject, opcodeNames) {
             opcode === 180 ||
             opcode === 181
           ) {
-            // getstatic, putstatic, getfield, putfield
             const fieldRef = getFieldRef(index);
             instruction.comment = `Field ${fieldRef.className}.${fieldRef.name}:${fieldRef.descriptor}`;
           } else if (
@@ -495,7 +508,6 @@ function parseClassFile(jsonObject, opcodeNames) {
             opcode === 184 ||
             opcode === 185
           ) {
-            // invokevirtual, invokespecial, invokestatic, invokeinterface
             const methodRef =
               opcode === 185
                 ? getInterfaceMethodRef(index)
@@ -507,11 +519,9 @@ function parseClassFile(jsonObject, opcodeNames) {
             opcode === 192 ||
             opcode === 193
           ) {
-            // new, anewarray, checkcast, instanceof
             const className = getClassName(index);
             instruction.comment = `Class ${className}`;
           } else if (opcode === 18 || opcode === 19 || opcode === 20) {
-            // ldc, ldc_w, ldc2_w
             const cpEntry = constantPool[index];
             if (cpEntry) {
               if (cpEntry.tag === 8) {
@@ -527,14 +537,20 @@ function parseClassFile(jsonObject, opcodeNames) {
               }
             }
           } else if (opcode === 197) {
-            // multianewarray
             const className = getClassName(index);
             instruction.comment = `Class ${className}`;
           }
         }
 
         instructions.push(instruction);
-        pc += opcodeLength; // Simplification; in reality, instruction lengths vary
+        let opcodeLength = opcodeInfo.length;
+        if (opcodeInfo.length === undefined) {
+          opcodeLength = 1;
+        }
+        if (opcode === 0xc4) {
+          opcodeLength++;
+        }
+        pc += opcodeLength;
       }
 
       methodInfo.code = {
@@ -543,7 +559,7 @@ function parseClassFile(jsonObject, opcodeNames) {
         codeLength: codeInfo.code_length,
         instructions,
         exceptionTable: codeInfo.exception_table,
-        attributes: codeInfo.attributes
+        attributes: codeInfo.attributes,
       };
     }
 
