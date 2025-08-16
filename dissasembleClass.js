@@ -429,11 +429,12 @@ function parseClassFile(jsonObject, opcodeNames) {
     accessFlags: jsonObject.access_flags,
     fields: [],
     methods: [],
+    attributes: jsonObject.attributes || [],
     major_version: jsonObject.major_version,
     minor_version: jsonObject.minor_version
   };
 
-  // Resolve source file name
+  // Resolve source file name (kept for backwards compatibility)
   const sourceFileAttr = jsonObject.attributes.find(
     (attr) => getUtf8(attr.attribute_name_index.index) === "SourceFile"
   );

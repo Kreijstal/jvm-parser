@@ -50,6 +50,30 @@ const ast = getAST(classBytes);
 console.log('  - AST object keys:', Object.keys(ast));
 console.log('  - AST.ast keys:', Object.keys(ast.ast || {}));
 
+// Check if attributes are now exposed in AST
+if (ast.ast && ast.ast.attributes) {
+    console.log('  - AST.ast.attributes length:', ast.ast.attributes.length);
+    console.log('  - Class-level attributes in AST:');
+    ast.ast.attributes.forEach((attr, index) => {
+        const nameIndex = attr.attribute_name_index.index;
+        const name = ast.constantPool[nameIndex];
+        const attributeName = (name && name.tag === 1) ? name.info.bytes : 'unknown';
+        console.log(`    [${index}] ${attributeName} (length: ${attr.attribute_length})`);
+        
+        if (attributeName === 'BootstrapMethods') {
+            console.log('    *** BootstrapMethods attribute now accessible in AST! ***');
+            console.log('    Bootstrap methods count:', attr.info.num_bootstrap_methods);
+            if (attr.info.bootstrap_methods) {
+                attr.info.bootstrap_methods.forEach((bm, i) => {
+                    console.log(`      Bootstrap method ${i}: ref=${bm.bootstrap_method_ref}, args=${bm.num_bootstrap_arguments}`);
+                });
+            }
+        }
+    });
+} else {
+    console.log('  *** AST.ast.attributes is still undefined ***');
+}
+
 console.log('\n3. Checking for invokedynamic instructions:');
 if (ast.ast && ast.ast.methods) {
     let foundInvokeDynamic = false;
