@@ -427,6 +427,13 @@ function parseClassFile(jsonObject, opcodeNames) {
     className: getClassName(jsonObject.this_class),
     superClassName: getClassName(jsonObject.super_class),
     accessFlags: jsonObject.access_flags,
+    interfaces: (jsonObject.interfaces || []).map(i => {
+      const entry = constantPool[i];
+      if (entry && entry.tag === 7) {
+        return getUtf8(entry.info.name_index);
+      }
+      return null;
+    }).filter(Boolean),
     fields: [],
     methods: [],
     attributes: jsonObject.attributes || [],
