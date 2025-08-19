@@ -456,7 +456,8 @@ function parseClassFile(jsonObject, opcodeNames) {
     ast.fields.push({
       name: fieldName,
       descriptor: fieldDescriptor,
-      accessFlags: field.access_flags
+      accessFlags: field.access_flags,
+      attributes: field.attributes || []
     });
   }
 
@@ -596,6 +597,9 @@ function parseClassFile(jsonObject, opcodeNames) {
         methodInfo.exceptions.push(exceptionName);
       }
     }
+
+    // Include all attributes in the method info
+    methodInfo.attributes = method.attributes || [];
 
     ast.methods.push(methodInfo);
   }
