@@ -12,3 +12,4 @@ newestast
 # Temporary test and demo files
 test_annotation_parsing.js
 demo_annotation_reflection.js
+.class

@@ -258,7 +258,7 @@ function disassemble(ast, constantPool) {
           opcodeName === "invokespecial" ||
           opcodeName === "invokestatic"
         ) {
-          const methodRef = getMethodRef(index);
+          const methodRef = getMethodRef(index) || getInterfaceMethodRef(index);
           commentText = `Method ${methodRef.className}.${methodRef.name}:${methodRef.descriptor}`;
         } else if (opcodeName === "invokeinterface") {
           const methodRef = getInterfaceMethodRef(index);
@@ -538,7 +538,7 @@ function parseClassFile(jsonObject, opcodeNames) {
             const methodRef =
               opcode === 185
                 ? getInterfaceMethodRef(index)
-                : getMethodRef(index);
+                : getMethodRef(index) || getInterfaceMethodRef(index);
             instruction.comment = `Method ${methodRef.className}.${methodRef.name}:${methodRef.descriptor}`;
           } else if (
             opcode === 187 ||
