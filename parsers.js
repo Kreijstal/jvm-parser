@@ -31,9 +31,47 @@ const ConstantNameAndTypeInfo = Parser.start()
   .uint16be("name_index")
   .uint16be("descriptor_index");
 
+// Class-file strings use Java's MODIFIED UTF-8, not standard UTF-8: the null
+// char and supplementary characters are encoded specially, and supplementary
+// characters appear as surrogate-pair-encoded 3-byte sequences whose decoded
+// values land in the surrogate range 0xD800-0xDFFF. A standard UTF-8 decoder
+// rejects those and emits replacement characters, corrupting strings (and
+// anything that reads them via charAt/length). Decode each unit with
+// fromCharCode so surrogates round-trip into a UTF-16 JS string, matching
+// java.lang.String semantics exactly.
+function decodeModifiedUtf8(arr) {
+  let result = "";
+  let i = 0;
+  const n = arr.length;
+  while (i < n) {
+    const b1 = arr[i++] & 0xff;
+    if (b1 < 0x80) {
+      result += String.fromCharCode(b1);
+    } else if ((b1 & 0xe0) === 0xc0) {
+      const b2 = arr[i++] & 0xff;
+      result += String.fromCharCode(((b1 & 0x1f) << 6) | (b2 & 0x3f));
+    } else if ((b1 & 0xf0) === 0xe0) {
+      const b2 = arr[i++] & 0xff;
+      const b3 = arr[i++] & 0xff;
+      result += String.fromCharCode(
+        ((b1 & 0x0f) << 12) | ((b2 & 0x3f) << 6) | (b3 & 0x3f),
+      );
+    } else {
+      result += String.fromCharCode(b1);
+    }
+  }
+  return result;
+}
+
 const ConstantUtf8Info = Parser.start()
   .uint16be("len")
-  .string("bytes", { length: "len" });
+  .array("bytes", {
+    type: "uint8",
+    length: "len",
+    formatter: function (arr) {
+      return decodeModifiedUtf8(arr);
+    },
+  });
 
 // @ts-ignore
 const ConstantMethodHandleInfo = Parser.start()
