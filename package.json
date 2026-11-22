@@ -21,6 +21,6 @@
     "url": "git+https://github.com/Kreijstal/jvm-parser.git"
   },
   "dependencies": {
-    "binary-parser": "^2.2.1"
+    "binary-parser": "^3.0.0"
   }
 }
